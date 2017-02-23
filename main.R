@@ -37,8 +37,7 @@ calculate_netto <- function(income, term){
  
  incomeTax19 <- ifelse(taxBase <= 35022.31, 0.19 * taxBase, 0.19 * 35022.31)
  incomeTax25 <- ifelse(taxBase > 35022.31, 0.25 * (taxBase - 35022.31), 0)
- #incomeTax <- incomeTax19 + incomeTax25
- 
+
  netto <- income - sum(soc) - health - incomeTax19 - incomeTax25
  nettoMonthly <- netto/term
  
