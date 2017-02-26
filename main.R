@@ -9,10 +9,11 @@ library(gridExtra)
 calculate_netto <- function(income, term){
   
  income <-  income
- incomeMonthly <- income/12
- health_soc_base <- income
- soc_upper <- ifelse(health_soc_base/12 <= 6181, health_soc_base, 6181 * 12) # upper base limit
  term <- term
+ incomeMonthly <- income/term
+ health_soc_base <- ifelse(income < (441.5 * term), 441.5 * term, income) 
+ soc_upper <- ifelse(health_soc_base/term <= 6181, health_soc_base, 6181 * term) # upper base limit
+ 
  
  medicare <- 0.044 * soc_upper
  oldAge <- 0.18 * soc_upper
@@ -30,7 +31,7 @@ calculate_netto <- function(income, term){
  
  taxBase1 <- income - fixedExpenses - sum(soc) - health
  taxBase1 <- ifelse(taxBase1 <= 0, 0, taxBase1)
- nonTaxable <- ifelse(taxBase1/term <= 1650.75, 316.94, 8755.578 - (taxBase1/4))
+ nonTaxable <- ifelse(taxBase1/term <= 1650.75, 316.94 * term, 8755.578 - (taxBase1/4))
  nonTaxable <- ifelse(nonTaxable <= 0, 0, nonTaxable)
  taxBase <- taxBase1 - nonTaxable
  taxBase <- ifelse(taxBase <= 0, 0, taxBase)
@@ -42,7 +43,7 @@ calculate_netto <- function(income, term){
  nettoMonthly <- netto/term
  
  result <- c(income, incomeMonthly, term, medicare, oldAge, disability, unemployment, solidarityFund, socAll, health,
-                fixedExpenses, incomeTax19, incomeTax25, netto, nettoMonthly)
+                fixedExpenses, nonTaxable, taxBase1, taxBase, incomeTax19, incomeTax25, netto, nettoMonthly)
  
  
  
@@ -59,6 +60,7 @@ main <- function(){
  toPlot <- as.data.frame(t(toPlot))
  colnames(toPlot) <-c('brutto', 'bruttoMonthly', 'term', 'medicare', 'oldAge', 'disability', 
                       'unemployment', 'solidarityFund', 'socAll', 'health', 'fixedExpenses',
+                      'nonTaxable', 'taxBase1', 'taxBase',
                       'incomeTax19', 'incomeTax25', 'netto', 'nettoMonthly')
  
  annotations <- toPlot[seq(1,181, 10), c('netto', 'nettoMonthly', 'brutto', 'bruttoMonthly')]
@@ -76,7 +78,7 @@ main <- function(){
 
  finalPlot1 <- ggplot() + 
    geom_area(aes(fill = deduction, x = brutto, y = value), 
-             data = toPlot1[!(toPlot1$deduction %in% c('taxBase', 'taxBase1', 'term', 'nettoMonthly', 'fixedExpenses', 'bruttoMonthly', 'socAll')),], 
+             data = toPlot1[!(toPlot1$deduction %in% c('taxBase', 'taxBase1', 'term', 'nettoMonthly', 'fixedExpenses', 'bruttoMonthly', 'socAll', 'nonTaxable', 'taxBase1', 'taxBase')),], 
              position = 'stack', 
              alpha = 0.7) + 
    geom_line(aes(x = brutto, y = netto), 
